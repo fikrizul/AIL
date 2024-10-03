@@ -1,0 +1,121 @@
+
+import re
+import os
+from pdf2image import convert_from_path
+from PIL import Image
+import pytesseract
+pytesseract.pytesseract.tesseract_cmd = r'C:\Program Files\Tesseract-OCR\tesseract.exe'
+
+
+class AIL:
+ 
+    patternnama = r"Nama[\-\:\.\_\s\|]+(?:P?(?=[elangq ]))[elangq ]*[\-\:\.\_\s\|]*([A-Z\.\d\_ ]+(?![a-z ]))"
+    patternnopel = r"[NoID]+[\.\s\-\_\|]+Pelan[cagq]+[ae]+n[\§\_\.\s\-\:\|]+(\d+)"
+    patternnoag = r"[Nomr\.]+[\.\s\-\:\_\|]+A[gaq]+enda[\§\_\.\s\-\:\|]+(\d+)"
+    # patternNoAg2 = r"KEDUA[\§\_\.\s\-\:\|]+Nomor[\§\_\.\s\-\:\|]+(\d+)"
+    patternnoag2 = r"(5614\d{14}|53961\d{13})"
+    # init method or constructor
+    tipeinfo=["nama","nopel","noag","noag2"]
+    def __init__(self, noail):
+        self.noail = noail
+        self.path=None
+        self.nama=""
+        self.nopel=""
+        self.noag=""
+        self.noag2=""
+        self.imgs=None
+        self.form=None
+        self.entryail()
+    
+
+
+    def ocr(self,img):
+        self.text = str(pytesseract.image_to_string(img, config='-c tessedit_char_whitelist=:"_.-\|abcdefghijklmnopgrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789 --psm 6'))
+
+    def regex(self, text,tipe):
+        getattr(self, f"pattern{tipe}")
+        finding=re.search(f"pattern{tipe}",text)
+
+        return finding.group(1) if finding else ""
+
+    def setresult(self,tipe,hasil):
+        getattr(self,tipe)
+        setattr(self,tipe,hasil)
+
+    
+    # # Sample Method
+    # def listpaths(self):
+        
+    #     pathposs=["PK","BA","SPJBTL","SIP","PDL", "SLO","1","2","3","4","5","6"]
+    #     delim=self.tipeform()[0]
+    #     tail="."+self.tipeform()[1]
+    #     for x in pathposs:
+    #         if  os.path.exists(x):
+                
+                
+    #     return pathlist
+    
+ 
+    def listpaths(self):
+        pathlist=[]
+        pathposs=["","PK","BA","SPJBTL","SIP","PDL", "SLO","1","2","3","4","5","6"]
+        delims=["","-","_",]
+        for x in pathposs:
+            for y in delims:
+                currpath=str(self.noail)+y+x+".pdf"
+                if os.path.exists(currpath):
+                    pathlist.append(currpath)
+                        
+                        
+
+        return pathlist  
+
+    def convertpdf(self):
+        imgs=[]
+        for path in self.listpaths():
+            img=convert_from_path(path,dpi=350)
+            for x in img:
+                x
+                imgs.append(x)
+        self.imgs=imgs
+    
+    def iteratedok(self):
+        self.convertpdf()
+        for tipe in self.tipeinfo:
+            hasil=""
+            for img in self.imgs:
+
+                self.ocr(img)
+                regex= self.regex(self.text,tipe)
+                if regex != "":
+                    hasil=regex+","+hasil
+        self.setresult(tipe,hasil)
+
+    def entryail(self):
+        self.iteratedok()
+        entryAIL = f"{self.noail},{self.nama},{self.nopel},{self.noag},{self.noag2}\n"
+        print(entryAIL)
+        with open("TabelentryAIL.csv","a") as tulisTabel:
+           tulisTabel.write(entryAIL)
+        return entryAIL
+        
+
+
+
+
+
+    
+awal=1
+akhir=550
+for x in range(awal,akhir):
+    ailx=AIL(x)
+    
+
+        
+    
+    
+
+
+    
+ 
+ 
